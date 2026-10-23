@@ -1,0 +1,30 @@
+{
+  "name": "fundacion-cauce",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.ts",
+  "packageManager": "pnpm@10.34.8",
+  "engines": {
+    "node": "^22.13.0 || ^24.3.0 || >=26.0.0"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "expo": "58.0.17",
+    "expo-status-bar": "58.0.4",
+    "react": "19.3.0",
+    "react-native": "0.88.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4",
+    "@types/react": "19.3.0",
+    "husky": "9.1.7",
+    "typescript": "6.0.3"
+  }
+}
