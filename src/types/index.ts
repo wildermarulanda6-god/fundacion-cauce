@@ -1,4 +1,5 @@
 export type ProjectStatus = 'active' | 'paused' | 'completed';
+export type StatusFilter = ProjectStatus | 'all';
 export type DonorKind = 'person' | 'company';
 export type AttentionState = 'enrolled' | 'in_progress' | 'graduated';
 
