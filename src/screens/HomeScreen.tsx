@@ -78,6 +78,12 @@ export function HomeScreen() {
   );
 
   return (
+
+
+
+
+
+    
     <KeyboardAvoidingView
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
