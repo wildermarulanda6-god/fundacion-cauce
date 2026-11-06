@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
 import {
-  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -20,6 +19,9 @@ import { beneficiaries, donors, projects, reports } from '@/data/mockData';
 import { COLORS, SPACING, TYPOGRAPHY } from '@/theme';
 import type { Project, StatusFilter } from '@/types';
 import { normalizeText } from '@/utils/search';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '@/navigation/types';
 
 const summary: SummaryItem[] = [
   { label: 'Donantes', value: donors.length },
@@ -29,6 +31,7 @@ const summary: SummaryItem[] = [
 ];
 
 export function HomeScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
 
@@ -41,9 +44,10 @@ export function HomeScreen() {
     });
   }, [query, status]);
 
-  const handlePress = useCallback((project: Project) => {
-    Alert.alert(project.title, `${project.donorIds.length} donantes apoyan este proyecto.`);
-  }, []);
+  const handlePress = useCallback(
+  (project: Project) => navigation.navigate('ProjectDetail', { projectId: project.id }),
+  [navigation],
+);
 
   const handleClear = useCallback(() => setQuery(''), []);
 
