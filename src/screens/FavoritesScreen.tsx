@@ -4,7 +4,7 @@ import type { ListRenderItemInfo } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProjectCard } from '@/components/ProjectCard';
-import { projects } from '@/data/mockData';
+import { useProjects } from '@/api/queries';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAppStore } from '@/store/useAppStore';
 import { COLORS, SPACING, TYPOGRAPHY } from '@/theme';
@@ -14,10 +14,11 @@ export function FavoritesScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const favoriteIds = useAppStore((state) => state.favoriteIds);
   const toggleFavorite = useAppStore((state) => state.toggleFavorite);
+  const { data } = useProjects();
 
   const favorites = useMemo(
-    () => projects.filter((project) => favoriteIds.includes(project.id)),
-    [favoriteIds],
+    () => (data ?? []).filter((project) => favoriteIds.includes(project.id)),
+    [data, favoriteIds],
   );
 
   const handlePress = useCallback(
