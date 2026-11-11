@@ -1,13 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
-import {
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { useCallback, useMemo } from 'react';
+import { FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native';
 import type { ListRenderItemInfo } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { EmptyState } from '@/components/EmptyState';
 import { Header } from '@/components/Header';
 import { ProjectCard } from '@/components/ProjectCard';
@@ -16,12 +11,11 @@ import { StatusFilterBar } from '@/components/StatusFilterBar';
 import { SummaryStrip } from '@/components/SummaryStrip';
 import type { SummaryItem } from '@/components/SummaryStrip';
 import { beneficiaries, donors, projects, reports } from '@/data/mockData';
-import { COLORS, SPACING, TYPOGRAPHY } from '@/theme';
-import type { Project, StatusFilter } from '@/types';
-import { normalizeText } from '@/utils/search';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@/navigation/types';
+import { useAppStore } from '@/store/useAppStore';
+import { COLORS, SPACING, TYPOGRAPHY } from '@/theme';
+import type { Project } from '@/types';
+import { normalizeText } from '@/utils/search';
 
 const summary: SummaryItem[] = [
   { label: 'Donantes', value: donors.length },
@@ -32,8 +26,13 @@ const summary: SummaryItem[] = [
 
 export function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [query, setQuery] = useState('');
-  const [status, setStatus] = useState<StatusFilter>('all');
+  const query = useAppStore((state) => state.query);
+  const status = useAppStore((state) => state.status);
+  const favoriteIds = useAppStore((state) => state.favoriteIds);
+  const setQuery = useAppStore((state) => state.setQuery);
+  const setStatus = useAppStore((state) => state.setStatus);
+  const resetFilters = useAppStore((state) => state.resetFilters);
+  const toggleFavorite = useAppStore((state) => state.toggleFavorite);
 
   const filteredProjects = useMemo(() => {
     const needle = normalizeText(query.trim());
@@ -45,33 +44,33 @@ export function HomeScreen() {
   }, [query, status]);
 
   const handlePress = useCallback(
-  (project: Project) => navigation.navigate('ProjectDetail', { projectId: project.id }),
-  [navigation],
-);
+    (project: Project) => navigation.navigate('ProjectDetail', { projectId: project.id }),
+    [navigation],
+  );
 
-  const handleClear = useCallback(() => setQuery(''), []);
-
-  const handleReset = useCallback(() => {
-    setQuery('');
-    setStatus('all');
-  }, []);
+  const handleClear = useCallback(() => setQuery(''), [setQuery]);
 
   const keyExtractor = useCallback((item: Project) => item.id, []);
 
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<Project>) => (
       <View style={styles.cardWrap}>
-        <ProjectCard project={item} onPress={handlePress} />
+        <ProjectCard
+          project={item}
+          isFavorite={favoriteIds.includes(item.id)}
+          onPress={handlePress}
+          onToggleFavorite={toggleFavorite}
+        />
       </View>
     ),
-    [handlePress],
+    [handlePress, favoriteIds, toggleFavorite],
   );
 
   const renderSeparator = useCallback(() => <View style={styles.separator} />, []);
 
   const renderEmpty = useCallback(
-    () => <EmptyState query={query.trim()} onReset={handleReset} />,
-    [query, handleReset],
+    () => <EmptyState query={query.trim()} onReset={resetFilters} />,
+    [query, resetFilters],
   );
 
   const listHeader = (
@@ -82,12 +81,6 @@ export function HomeScreen() {
   );
 
   return (
-
-
-
-
-
-    
     <KeyboardAvoidingView
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -99,6 +92,7 @@ export function HomeScreen() {
       </View>
       <FlatList
         data={filteredProjects}
+        extraData={favoriteIds}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         ItemSeparatorComponent={renderSeparator}
