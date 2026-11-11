@@ -39,3 +39,15 @@ export interface Report {
   title: string;
   publishedAt: string;
 }
+export interface Donation {
+  id: string;
+  projectId: string;
+  donorName: string;
+  amount: number;
+  createdAt: string;
+}
+
+export interface NewDonation {
+  donorName: string;
+  amount: number;
+}

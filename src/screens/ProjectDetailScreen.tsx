@@ -1,11 +1,25 @@
+import { useCallback, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useCreateDonation, useDeleteDonation, useDonations, useProject } from '@/api/queries';
+import { ErrorState } from '@/components/ErrorState';
 import { ListRow } from '@/components/ListRow';
+import { LoadingState } from '@/components/LoadingState';
 import { ProgressRail } from '@/components/ProgressRail';
-import { beneficiaries, donors, projects, reports } from '@/data/mockData';
+import { beneficiaries, donors, reports } from '@/data/mockData';
 import type { RootStackParamList } from '@/navigation/types';
-import { COLORS, SPACING, STATUS_COLOR, STATUS_LABEL, TYPOGRAPHY } from '@/theme';
+import { COLORS, RADIUS, SPACING, STATUS_COLOR, STATUS_LABEL, TYPOGRAPHY } from '@/theme';
 import { formatCop, percentOf } from '@/utils/format';
 import { ATTENTION_LABEL, DONOR_KIND_LABEL } from '@/utils/labels';
 
@@ -26,60 +40,140 @@ function Section({ title, children }: SectionProps) {
 }
 
 export function ProjectDetailScreen({ route }: ProjectDetailProps) {
-  const project = projects.find((item) => item.id === route.params.projectId);
+  const { projectId } = route.params;
+  const { data: project, isPending, isError, error, refetch } = useProject(projectId);
+  const { data: donations, isPending: donationsPending } = useDonations(projectId);
+  const { mutate: donate, isPending: isDonating, error: donateError, reset: resetDonate } = useCreateDonation(projectId);
+  const { mutate: removeDonation, isPending: isRemoving } = useDeleteDonation();
 
-  if (!project) {
-    return (
-      <View style={styles.missing}>
-        <Text style={styles.missingText}>No encontramos este proyecto.</Text>
-      </View>
+  const [donorName, setDonorName] = useState('');
+  const [amount, setAmount] = useState('');
+
+  const handleSubmit = useCallback(() => {
+    donate(
+      { donorName, amount: Number(amount.replace(/\D/g, '')) },
+      {
+        onSuccess: () => {
+          setDonorName('');
+          setAmount('');
+        },
+      },
     );
+  }, [donate, donorName, amount]);
+
+  const handleRetry = useCallback(() => {
+    void refetch();
+  }, [refetch]);
+
+  if (isPending) {
+    return <LoadingState />;
+  }
+  if (isError) {
+    return <ErrorState message={error.message} onRetry={handleRetry} />;
   }
 
   const percent = percentOf(project.raisedAmount, project.goalAmount);
   const projectDonors = donors.filter((item) => project.donorIds.includes(item.id));
   const projectBeneficiaries = beneficiaries.filter((item) => project.beneficiaryIds.includes(item.id));
   const projectReports = reports.filter((item) => project.reportIds.includes(item.id));
+  const newDonations = donations ?? [];
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Image source={{ uri: project.imageUrl }} style={styles.image} />
-      <Text style={styles.title}>{project.title}</Text>
-      <Text style={styles.meta}>{`${project.location} · ${STATUS_LABEL[project.status]}`}</Text>
-      <Text style={styles.summary}>{project.summary}</Text>
-      <ProgressRail percent={percent} color={STATUS_COLOR[project.status]} />
-      <Text style={styles.money}>
-        {`${formatCop(project.raisedAmount)} de ${formatCop(project.goalAmount)} (${percent}%)`}
-      </Text>
+    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <Image source={{ uri: project.imageUrl }} style={styles.image} />
+        <Text style={styles.title}>{project.title}</Text>
+        <Text style={styles.meta}>{`${project.location} · ${STATUS_LABEL[project.status]}`}</Text>
+        <Text style={styles.summary}>{project.summary}</Text>
+        <ProgressRail percent={percent} color={STATUS_COLOR[project.status]} />
+        <Text style={styles.money}>
+          {`${formatCop(project.raisedAmount)} de ${formatCop(project.goalAmount)} (${percent}%)`}
+        </Text>
 
-      <Section title={`Donantes (${projectDonors.length})`}>
-        {projectDonors.map((item) => (
-          <ListRow
-            key={item.id}
-            title={item.name}
-            subtitle={DONOR_KIND_LABEL[item.kind]}
-            trailing={formatCop(item.totalDonated)}
+        <Section title="Haz una donación">
+          <TextInput
+            value={donorName}
+            onChangeText={(text) => {
+              resetDonate();
+              setDonorName(text);
+            }}
+            placeholder="Tu nombre"
+            placeholderTextColor={COLORS.pizarra}
+            style={styles.input}
+            accessibilityLabel="Nombre del donante"
           />
-        ))}
-      </Section>
-
-      <Section title={`Beneficiarios (${projectBeneficiaries.length})`}>
-        {projectBeneficiaries.map((item) => (
-          <ListRow
-            key={item.id}
-            title={item.name}
-            subtitle={item.city}
-            trailing={ATTENTION_LABEL[item.attention]}
+          <TextInput
+            value={amount}
+            onChangeText={(text) => {
+              resetDonate();
+              setAmount(text);
+            }}
+            placeholder="Monto en pesos"
+            placeholderTextColor={COLORS.pizarra}
+            keyboardType="number-pad"
+            style={styles.input}
+            accessibilityLabel="Monto de la donación"
           />
-        ))}
-      </Section>
+          {donateError ? <Text style={styles.error}>{donateError.message}</Text> : null}
+          <Pressable
+            onPress={handleSubmit}
+            disabled={isDonating}
+            style={({ pressed }) => [styles.button, (pressed || isDonating) && styles.buttonPressed]}
+            accessibilityRole="button"
+          >
+            <Text style={styles.buttonText}>{isDonating ? 'Enviando…' : 'Donar'}</Text>
+          </Pressable>
+        </Section>
 
-      <Section title={`Informes (${projectReports.length})`}>
-        {projectReports.map((item) => (
-          <ListRow key={item.id} title={item.title} subtitle="Publicado" trailing={item.publishedAt} />
-        ))}
-      </Section>
-    </ScrollView>
+        <Section title={`Donaciones nuevas (${newDonations.length})`}>
+          {donationsPending ? <Text style={styles.summary}>Cargando donaciones…</Text> : null}
+          {!donationsPending && newDonations.length === 0 ? (
+            <Text style={styles.summary}>Todavía no hay donaciones nuevas.</Text>
+          ) : null}
+          {newDonations.map((item) => (
+            <View key={item.id} style={styles.donationItem}>
+              <ListRow title={item.donorName} subtitle={item.createdAt} trailing={formatCop(item.amount)} />
+              <Pressable
+                onPress={() => removeDonation(item.id)}
+                disabled={isRemoving}
+                style={styles.remove}
+                accessibilityRole="button"
+              >
+                <Text style={styles.removeText}>Eliminar</Text>
+              </Pressable>
+            </View>
+          ))}
+        </Section>
+
+        <Section title={`Donantes (${projectDonors.length})`}>
+          {projectDonors.map((item) => (
+            <ListRow
+              key={item.id}
+              title={item.name}
+              subtitle={DONOR_KIND_LABEL[item.kind]}
+              trailing={formatCop(item.totalDonated)}
+            />
+          ))}
+        </Section>
+
+        <Section title={`Beneficiarios (${projectBeneficiaries.length})`}>
+          {projectBeneficiaries.map((item) => (
+            <ListRow
+              key={item.id}
+              title={item.name}
+              subtitle={item.city}
+              trailing={ATTENTION_LABEL[item.attention]}
+            />
+          ))}
+        </Section>
+
+        <Section title={`Informes (${projectReports.length})`}>
+          {projectReports.map((item) => (
+            <ListRow key={item.id} title={item.title} subtitle="Publicado" trailing={item.publishedAt} />
+          ))}
+        </Section>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -93,6 +187,26 @@ const styles = StyleSheet.create({
   money: { ...TYPOGRAPHY.label, color: COLORS.cauce },
   section: { gap: SPACING.sm, marginTop: SPACING.md },
   sectionTitle: { ...TYPOGRAPHY.title, color: COLORS.cauce },
-  missing: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.niebla },
-  missingText: { ...TYPOGRAPHY.body, color: COLORS.pizarra },
+  input: {
+    backgroundColor: COLORS.papel,
+    borderWidth: 1,
+    borderColor: COLORS.linea,
+    borderRadius: RADIUS.card,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    fontSize: 15,
+    color: COLORS.ink,
+  },
+  error: { ...TYPOGRAPHY.label, color: COLORS.coral },
+  button: {
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.card,
+    backgroundColor: COLORS.cauce,
+  },
+  buttonPressed: { opacity: 0.7 },
+  buttonText: { ...TYPOGRAPHY.label, color: COLORS.papel },
+  donationItem: { gap: SPACING.xs },
+  remove: { alignSelf: 'flex-end', paddingVertical: SPACING.xs, paddingHorizontal: SPACING.sm },
+  removeText: { ...TYPOGRAPHY.label, color: COLORS.coral },
 });

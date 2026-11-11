@@ -3,29 +3,30 @@ import { FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, View } from
 import type { ListRenderItemInfo } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useProjects } from '@/api/queries';
 import { EmptyState } from '@/components/EmptyState';
+import { ErrorState } from '@/components/ErrorState';
 import { Header } from '@/components/Header';
+import { LoadingState } from '@/components/LoadingState';
 import { ProjectCard } from '@/components/ProjectCard';
 import { SearchBar } from '@/components/SearchBar';
 import { StatusFilterBar } from '@/components/StatusFilterBar';
 import { SummaryStrip } from '@/components/SummaryStrip';
 import type { SummaryItem } from '@/components/SummaryStrip';
-import { beneficiaries, donors, projects, reports } from '@/data/mockData';
+import { beneficiaries, donors, reports } from '@/data/mockData';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAppStore } from '@/store/useAppStore';
 import { COLORS, SPACING, TYPOGRAPHY } from '@/theme';
 import type { Project } from '@/types';
 import { normalizeText } from '@/utils/search';
 
-const summary: SummaryItem[] = [
-  { label: 'Donantes', value: donors.length },
-  { label: 'Proyectos', value: projects.length },
-  { label: 'Beneficiarios', value: beneficiaries.length },
-  { label: 'Informes', value: reports.length },
-];
+const NO_PROJECTS: Project[] = [];
 
 export function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { data, isPending, isError, error, refetch, isRefetching } = useProjects();
+  const projects = data ?? NO_PROJECTS;
+
   const query = useAppStore((state) => state.query);
   const status = useAppStore((state) => state.status);
   const favoriteIds = useAppStore((state) => state.favoriteIds);
@@ -34,6 +35,16 @@ export function HomeScreen() {
   const resetFilters = useAppStore((state) => state.resetFilters);
   const toggleFavorite = useAppStore((state) => state.toggleFavorite);
 
+  const summary = useMemo<SummaryItem[]>(
+    () => [
+      { label: 'Donantes', value: donors.length },
+      { label: 'Proyectos', value: projects.length },
+      { label: 'Beneficiarios', value: beneficiaries.length },
+      { label: 'Informes', value: reports.length },
+    ],
+    [projects.length],
+  );
+
   const filteredProjects = useMemo(() => {
     const needle = normalizeText(query.trim());
     return projects.filter((project) => {
@@ -41,7 +52,7 @@ export function HomeScreen() {
       const haystack = normalizeText(`${project.title} ${project.location} ${project.summary}`);
       return matchesStatus && (needle === '' || haystack.includes(needle));
     });
-  }, [query, status]);
+  }, [projects, query, status]);
 
   const handlePress = useCallback(
     (project: Project) => navigation.navigate('ProjectDetail', { projectId: project.id }),
@@ -49,6 +60,10 @@ export function HomeScreen() {
   );
 
   const handleClear = useCallback(() => setQuery(''), [setQuery]);
+
+  const handleRefresh = useCallback(() => {
+    void refetch();
+  }, [refetch]);
 
   const keyExtractor = useCallback((item: Project) => item.id, []);
 
@@ -80,16 +95,13 @@ export function HomeScreen() {
     </View>
   );
 
-  return (
-    <KeyboardAvoidingView
-      style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <Header />
-      <View style={styles.controls}>
-        <SearchBar value={query} onChangeText={setQuery} onClear={handleClear} />
-        <StatusFilterBar selected={status} onSelect={setStatus} />
-      </View>
+  let content;
+  if (isPending) {
+    content = <LoadingState />;
+  } else if (isError) {
+    content = <ErrorState message={error.message} onRetry={handleRefresh} />;
+  } else {
+    content = (
       <FlatList
         data={filteredProjects}
         extraData={favoriteIds}
@@ -101,7 +113,23 @@ export function HomeScreen() {
         contentContainerStyle={styles.listContent}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
+        refreshing={isRefetching}
+        onRefresh={handleRefresh}
       />
+    );
+  }
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <Header />
+      <View style={styles.controls}>
+        <SearchBar value={query} onChangeText={setQuery} onClear={handleClear} />
+        <StatusFilterBar selected={status} onSelect={setStatus} />
+      </View>
+      {content}
     </KeyboardAvoidingView>
   );
 }
