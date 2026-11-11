@@ -6,10 +6,12 @@ import { formatCop, percentOf } from '@/utils/format';
 
 interface ProjectCardProps {
   project: Project;
+  isFavorite: boolean;
   onPress: (project: Project) => void;
+  onToggleFavorite: (projectId: string) => void;
 }
 
-export function ProjectCard({ project, onPress }: ProjectCardProps) {
+export function ProjectCard({ project, isFavorite, onPress, onToggleFavorite }: ProjectCardProps) {
   const percent = percentOf(project.raisedAmount, project.goalAmount);
   const statusColor = STATUS_COLOR[project.status];
 
@@ -43,6 +45,16 @@ export function ProjectCard({ project, onPress }: ProjectCardProps) {
               <Text style={styles.count}>{`${project.beneficiaryIds.length} beneficiarios`}</Text>
               <Text style={styles.count}>{`${project.reportIds.length} informes`}</Text>
             </View>
+            <Pressable
+              onPress={() => onToggleFavorite(project.id)}
+              style={styles.favorite}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isFavorite }}
+            >
+              <Text style={isFavorite ? styles.favoriteOn : styles.favoriteOff}>
+                {isFavorite ? '★ En favoritos' : '☆ Guardar en favoritos'}
+              </Text>
+            </Pressable>
           </View>
         </View>
       </View>
@@ -86,4 +98,7 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.sm,
   },
   count: { ...TYPOGRAPHY.label, color: COLORS.cauce },
+  favorite: { alignSelf: 'flex-start', paddingVertical: SPACING.xs },
+  favoriteOn: { ...TYPOGRAPHY.label, color: COLORS.cauce },
+  favoriteOff: { ...TYPOGRAPHY.label, color: COLORS.pizarra },
 });
