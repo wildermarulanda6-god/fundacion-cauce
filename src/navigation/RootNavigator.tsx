@@ -4,9 +4,11 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { BeneficiariesScreen } from '@/screens/BeneficiariesScreen';
 import { DonorsScreen } from '@/screens/DonorsScreen';
+import { FavoritesScreen } from '@/screens/FavoritesScreen';
 import { HomeScreen } from '@/screens/HomeScreen';
 import { ProjectDetailScreen } from '@/screens/ProjectDetailScreen';
 import { ReportsScreen } from '@/screens/ReportsScreen';
+import { useAppStore } from '@/store/useAppStore';
 import { COLORS } from '@/theme';
 import type { RootStackParamList, TabParamList } from './types';
 
@@ -20,6 +22,9 @@ const headerOptions = {
 };
 
 function Tabs() {
+  // Número de favoritos: cuando cambia en el store, esta pestaña se actualiza sola.
+  const favoriteCount = useAppStore((state) => state.favoriteIds.length);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -32,6 +37,11 @@ function Tabs() {
       }}
     >
       <Tab.Screen name="Projects" component={HomeScreen} options={{ title: 'Proyectos', headerShown: false }} />
+      <Tab.Screen
+        name="Favorites"
+        component={FavoritesScreen}
+        options={{ title: 'Favoritos', tabBarBadge: favoriteCount > 0 ? favoriteCount : undefined }}
+      />
       <Tab.Screen name="Donors" component={DonorsScreen} options={{ title: 'Donantes' }} />
       <Tab.Screen name="Beneficiaries" component={BeneficiariesScreen} options={{ title: 'Beneficiarios' }} />
       <Tab.Screen name="Reports" component={ReportsScreen} options={{ title: 'Informes' }} />
