@@ -51,3 +51,11 @@ export interface NewDonation {
   donorName: string;
   amount: number;
 }
+
+export interface ProjectInput {
+  title: string;
+  location: string;
+  summary: string;
+  goalAmount: number;
+  status: ProjectStatus;
+}
