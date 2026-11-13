@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Donation, NewDonation, Project } from '@/types';
+import type { Donation, NewDonation, Project, ProjectInput } from '@/types';
 import { apiClient } from './client';
 
 export const queryKeys = {
@@ -42,6 +42,23 @@ export function useDeleteDonation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (donationId: string) => (await apiClient.delete<Donation>(`/donations/${donationId}`)).data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.projects }),
+  });
+}
+
+export function useCreateProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: ProjectInput) => (await apiClient.post<Project>('/projects', input)).data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.projects }),
+  });
+}
+
+export function useUpdateProject(projectId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: ProjectInput) =>
+      (await apiClient.put<Project>(`/projects/${projectId}`, input)).data,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.projects }),
   });
 }
