@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native';
+import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ListRenderItemInfo } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,7 +16,7 @@ import type { SummaryItem } from '@/components/SummaryStrip';
 import { beneficiaries, donors, reports } from '@/data/mockData';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAppStore } from '@/store/useAppStore';
-import { COLORS, SPACING, TYPOGRAPHY } from '@/theme';
+import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/theme';
 import type { Project } from '@/types';
 import { normalizeText } from '@/utils/search';
 
@@ -60,6 +60,7 @@ export function HomeScreen() {
   );
 
   const handleClear = useCallback(() => setQuery(''), [setQuery]);
+  const handleNew = useCallback(() => navigation.navigate('ProjectForm'), [navigation]);
 
   const handleRefresh = useCallback(() => {
     void refetch();
@@ -128,6 +129,13 @@ export function HomeScreen() {
       <View style={styles.controls}>
         <SearchBar value={query} onChangeText={setQuery} onClear={handleClear} />
         <StatusFilterBar selected={status} onSelect={setStatus} />
+        <Pressable
+          onPress={handleNew}
+          style={({ pressed }) => [styles.newButton, pressed && styles.newButtonPressed]}
+          accessibilityRole="button"
+        >
+          <Text style={styles.newButtonText}>+ Nuevo proyecto</Text>
+        </Pressable>
       </View>
       {content}
     </KeyboardAvoidingView>
@@ -148,4 +156,12 @@ const styles = StyleSheet.create({
   count: { ...TYPOGRAPHY.label, color: COLORS.pizarra, paddingHorizontal: SPACING.lg, paddingTop: SPACING.md },
   cardWrap: { paddingHorizontal: SPACING.lg },
   separator: { height: SPACING.lg },
+   newButton: {
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.card,
+    backgroundColor: COLORS.cauce,
+  },
+  newButtonPressed: { opacity: 0.85 },
+  newButtonText: { ...TYPOGRAPHY.label, color: COLORS.papel },
 });

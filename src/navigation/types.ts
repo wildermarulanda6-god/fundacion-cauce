@@ -11,4 +11,5 @@ export type TabParamList = {
 export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabParamList>;
   ProjectDetail: { projectId: string };
+  ProjectForm: { projectId?: string } | undefined;
 };

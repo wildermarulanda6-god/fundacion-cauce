@@ -11,6 +11,7 @@ import { ReportsScreen } from '@/screens/ReportsScreen';
 import { useAppStore } from '@/store/useAppStore';
 import { COLORS } from '@/theme';
 import type { RootStackParamList, TabParamList } from './types';
+import { ProjectFormScreen } from '@/screens/ProjectFormScreen';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -55,6 +56,7 @@ export function RootNavigator() {
       <Stack.Navigator screenOptions={headerOptions}>
         <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />
         <Stack.Screen name="ProjectDetail" component={ProjectDetailScreen} options={{ title: 'Proyecto' }} />
+        <Stack.Screen name="ProjectForm" component={ProjectFormScreen} options={({ route }) => ({ title: route.params?.projectId ? 'Editar proyecto' : 'Nuevo proyecto' })}/>
       </Stack.Navigator>
     </NavigationContainer>
   );

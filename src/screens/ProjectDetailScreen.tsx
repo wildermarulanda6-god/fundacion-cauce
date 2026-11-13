@@ -39,7 +39,7 @@ function Section({ title, children }: SectionProps) {
   );
 }
 
-export function ProjectDetailScreen({ route }: ProjectDetailProps) {
+export function ProjectDetailScreen({ route, navigation }: ProjectDetailProps) {
   const { projectId } = route.params;
   const { data: project, isPending, isError, error, refetch } = useProject(projectId);
   const { data: donations, isPending: donationsPending } = useDonations(projectId);
@@ -65,6 +65,11 @@ export function ProjectDetailScreen({ route }: ProjectDetailProps) {
     void refetch();
   }, [refetch]);
 
+  const handleEdit = useCallback(
+    () => navigation.navigate('ProjectForm', { projectId }),
+    [navigation, projectId],
+  );
+
   if (isPending) {
     return <LoadingState />;
   }
@@ -89,6 +94,14 @@ export function ProjectDetailScreen({ route }: ProjectDetailProps) {
         <Text style={styles.money}>
           {`${formatCop(project.raisedAmount)} de ${formatCop(project.goalAmount)} (${percent}%)`}
         </Text>
+
+                <Pressable
+          onPress={handleEdit}
+          style={({ pressed }) => [styles.editButton, pressed && styles.buttonPressed]}
+          accessibilityRole="button"
+        >
+          <Text style={styles.editText}>Editar proyecto</Text>
+        </Pressable>
 
         <Section title="Haz una donación">
           <TextInput
@@ -209,4 +222,13 @@ const styles = StyleSheet.create({
   donationItem: { gap: SPACING.xs },
   remove: { alignSelf: 'flex-end', paddingVertical: SPACING.xs, paddingHorizontal: SPACING.sm },
   removeText: { ...TYPOGRAPHY.label, color: COLORS.coral },
+
+    editButton: {
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.card,
+    borderWidth: 1,
+    borderColor: COLORS.cauce,
+  },
+  editText: { ...TYPOGRAPHY.label, color: COLORS.cauce },
 });
