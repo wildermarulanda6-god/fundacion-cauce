@@ -1,3 +1,4 @@
+import { useAppStore } from '@/store/useAppStore';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ProgressRail } from '@/components/ProgressRail';
 import { COLORS, RADIUS, SPACING, STATUS_COLOR, STATUS_LABEL, TYPOGRAPHY } from '@/theme';
@@ -12,6 +13,7 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, isFavorite, onPress, onToggleFavorite }: ProjectCardProps) {
+  const showImages = useAppStore((state) => state.showImages);
   const percent = percentOf(project.raisedAmount, project.goalAmount);
   const statusColor = STATUS_COLOR[project.status];
 
@@ -25,7 +27,7 @@ export function ProjectCard({ project, isFavorite, onPress, onToggleFavorite }: 
       <View style={styles.row}>
         <View style={stripeStyles[project.status]} />
         <View style={styles.body}>
-          <Image source={{ uri: project.imageUrl }} style={styles.image} />
+          {showImages ? <Image source={{ uri: project.imageUrl }} style={styles.image} /> : null}
           <View style={styles.content}>
             <View style={styles.titleRow}>
               <Text style={styles.title}>{project.title}</Text>
