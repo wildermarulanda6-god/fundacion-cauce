@@ -66,6 +66,8 @@ export function HomeScreen() {
 
   const handleNew = useCallback(() => navigation.navigate('ProjectForm'), [navigation]);
 
+  const handleSettings = useCallback(() => navigation.navigate('Settings'), [navigation]);
+
   const handleRefresh = useCallback(() => {
     void refetch();
   }, [refetch]);
@@ -140,6 +142,14 @@ export function HomeScreen() {
         >
           <Text style={styles.newButtonText}>+ Nuevo proyecto</Text>
         </Pressable>
+
+        <Pressable
+          onPress={handleSettings}
+          style={({ pressed }) => [styles.settingsButton, pressed && styles.newButtonPressed]}
+          accessibilityRole="button"
+        >
+          <Text style={styles.settingsText}>Ajustes</Text>
+        </Pressable>
       </View>
       {isOnline ? null : <OfflineBanner />}
       {content}
@@ -169,4 +179,12 @@ const styles = StyleSheet.create({
   },
   newButtonPressed: { opacity: 0.85 },
   newButtonText: { ...TYPOGRAPHY.label, color: COLORS.papel },
+    settingsButton: {
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.card,
+    borderWidth: 1,
+    borderColor: COLORS.cauce,
+  },
+  settingsText: { ...TYPOGRAPHY.label, color: COLORS.cauce },
 });

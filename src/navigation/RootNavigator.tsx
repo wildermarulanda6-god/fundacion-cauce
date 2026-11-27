@@ -12,6 +12,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { COLORS } from '@/theme';
 import type { RootStackParamList, TabParamList } from './types';
 import { ProjectFormScreen } from '@/screens/ProjectFormScreen';
+import { SettingsScreen } from '@/screens/SettingsScreen';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -43,6 +44,7 @@ function Tabs() {
         component={FavoritesScreen}
         options={{ title: 'Favoritos', tabBarBadge: favoriteCount > 0 ? favoriteCount : undefined }}
       />
+      <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Ajustes' }} />
       <Tab.Screen name="Donors" component={DonorsScreen} options={{ title: 'Donantes' }} />
       <Tab.Screen name="Beneficiaries" component={BeneficiariesScreen} options={{ title: 'Beneficiarios' }} />
       <Tab.Screen name="Reports" component={ReportsScreen} options={{ title: 'Informes' }} />

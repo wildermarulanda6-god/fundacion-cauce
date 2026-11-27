@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   Image,
@@ -11,6 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useDonorProfile } from '@/hooks/useDonorProfile';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCreateDonation, useDeleteDonation, useDonations, useProject } from '@/api/queries';
 import { ErrorState } from '@/components/ErrorState';
@@ -48,6 +49,13 @@ export function ProjectDetailScreen({ route, navigation }: ProjectDetailProps) {
 
   const [donorName, setDonorName] = useState('');
   const [amount, setAmount] = useState('');
+  const { profile } = useDonorProfile();
+
+  useEffect(() => {
+    if (profile) {
+      setDonorName((current) => (current === '' ? profile.name : current));
+    }
+  }, [profile]);
 
   const handleSubmit = useCallback(() => {
     donate(
@@ -95,7 +103,7 @@ export function ProjectDetailScreen({ route, navigation }: ProjectDetailProps) {
           {`${formatCop(project.raisedAmount)} de ${formatCop(project.goalAmount)} (${percent}%)`}
         </Text>
 
-                <Pressable
+        <Pressable
           onPress={handleEdit}
           style={({ pressed }) => [styles.editButton, pressed && styles.buttonPressed]}
           accessibilityRole="button"
@@ -223,7 +231,7 @@ const styles = StyleSheet.create({
   remove: { alignSelf: 'flex-end', paddingVertical: SPACING.xs, paddingHorizontal: SPACING.sm },
   removeText: { ...TYPOGRAPHY.label, color: COLORS.coral },
 
-    editButton: {
+  editButton: {
     alignItems: 'center',
     paddingVertical: SPACING.md,
     borderRadius: RADIUS.card,
