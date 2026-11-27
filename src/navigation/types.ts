@@ -9,6 +9,7 @@ export type TabParamList = {
 };
 
 export type RootStackParamList = {
+  Settings: undefined;
   Tabs: NavigatorScreenParams<TabParamList>;
   ProjectDetail: { projectId: string };
   ProjectForm: { projectId?: string } | undefined;

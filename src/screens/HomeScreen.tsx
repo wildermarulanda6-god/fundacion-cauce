@@ -8,12 +8,14 @@ import { EmptyState } from '@/components/EmptyState';
 import { ErrorState } from '@/components/ErrorState';
 import { Header } from '@/components/Header';
 import { LoadingState } from '@/components/LoadingState';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { ProjectCard } from '@/components/ProjectCard';
 import { SearchBar } from '@/components/SearchBar';
 import { StatusFilterBar } from '@/components/StatusFilterBar';
 import { SummaryStrip } from '@/components/SummaryStrip';
 import type { SummaryItem } from '@/components/SummaryStrip';
 import { beneficiaries, donors, reports } from '@/data/mockData';
+import { useIsOnline } from '@/hooks/useIsOnline';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAppStore } from '@/store/useAppStore';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/theme';
@@ -24,6 +26,7 @@ const NO_PROJECTS: Project[] = [];
 
 export function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const isOnline = useIsOnline();
   const { data, isPending, isError, error, refetch, isRefetching } = useProjects();
   const projects = data ?? NO_PROJECTS;
 
@@ -60,7 +63,10 @@ export function HomeScreen() {
   );
 
   const handleClear = useCallback(() => setQuery(''), [setQuery]);
+
   const handleNew = useCallback(() => navigation.navigate('ProjectForm'), [navigation]);
+
+  const handleSettings = useCallback(() => navigation.navigate('Settings'), [navigation]);
 
   const handleRefresh = useCallback(() => {
     void refetch();
@@ -136,7 +142,16 @@ export function HomeScreen() {
         >
           <Text style={styles.newButtonText}>+ Nuevo proyecto</Text>
         </Pressable>
+
+        <Pressable
+          onPress={handleSettings}
+          style={({ pressed }) => [styles.settingsButton, pressed && styles.newButtonPressed]}
+          accessibilityRole="button"
+        >
+          <Text style={styles.settingsText}>Ajustes</Text>
+        </Pressable>
       </View>
+      {isOnline ? null : <OfflineBanner />}
       {content}
     </KeyboardAvoidingView>
   );
@@ -156,7 +171,7 @@ const styles = StyleSheet.create({
   count: { ...TYPOGRAPHY.label, color: COLORS.pizarra, paddingHorizontal: SPACING.lg, paddingTop: SPACING.md },
   cardWrap: { paddingHorizontal: SPACING.lg },
   separator: { height: SPACING.lg },
-   newButton: {
+  newButton: {
     alignItems: 'center',
     paddingVertical: SPACING.md,
     borderRadius: RADIUS.card,
@@ -164,4 +179,12 @@ const styles = StyleSheet.create({
   },
   newButtonPressed: { opacity: 0.85 },
   newButtonText: { ...TYPOGRAPHY.label, color: COLORS.papel },
+    settingsButton: {
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.card,
+    borderWidth: 1,
+    borderColor: COLORS.cauce,
+  },
+  settingsText: { ...TYPOGRAPHY.label, color: COLORS.cauce },
 });
